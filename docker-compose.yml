@@ -16,7 +16,7 @@ services:
     networks:
       - bootcamp-network
 
-  app:
+  technologies-ms:
     build:
       context: ./technologies-ms/
     image: technologies_ms-image:latest
@@ -33,6 +33,23 @@ services:
     networks:
       - bootcamp-network
 
+  capabilities-ms:
+    build:
+      context: ./capabilities-ms/
+    image: capabilities-image:latest
+    container_name: capabilities-ms
+    ports:
+      - "8082:8080"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://db:5432/bootcamp_db
+      SPRING_R2DBC_USERNAME: user_admin
+      SPRING_R2DBC_PASSWORD: password123
+      SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
+      TECHNOLOGIES_MS_URL: http://technologies-ms:8080/api/v1/technologies
+    depends_on:
+      - technologies-ms
+    networks:
+      - bootcamp-network
 networks:
   bootcamp-network:
     driver: bridge

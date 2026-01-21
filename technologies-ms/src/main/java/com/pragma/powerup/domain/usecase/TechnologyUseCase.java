@@ -6,6 +6,8 @@ import com.pragma.powerup.domain.model.Technology;
 import com.pragma.powerup.domain.spi.ITechnologyPersistencePort;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 public class TechnologyUseCase implements ITechnologyServicePort {
     private final ITechnologyPersistencePort persistencePort;
 
@@ -23,5 +25,16 @@ public class TechnologyUseCase implements ITechnologyServicePort {
                     return persistencePort.save(technology);
                 })
                 .then();
+    }
+
+    @Override
+    public Mono<Long> verifyTechnologiesExist(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Mono.just(Long.MIN_VALUE);
+        }
+
+        List<Long> uniqueIds = ids.stream().distinct().toList();
+
+        return persistencePort.countByIds(uniqueIds);
     }
 }

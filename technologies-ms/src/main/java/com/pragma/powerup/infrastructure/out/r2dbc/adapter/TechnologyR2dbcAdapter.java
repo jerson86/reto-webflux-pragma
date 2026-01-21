@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class TechnologyR2dbcAdapter implements ITechnologyPersistencePort {
@@ -23,5 +25,10 @@ public class TechnologyR2dbcAdapter implements ITechnologyPersistencePort {
     @Override
     public Mono<Boolean> existsByName(String name) {
         return repository.existsByName(name);
+    }
+
+    @Override
+    public Mono<Long> countByIds(List<Long> ids) {
+        return repository.findAllById(ids).count();
     }
 }

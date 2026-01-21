@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class TechnologyHandler implements ITechnologyHandler {
@@ -18,5 +20,10 @@ public class TechnologyHandler implements ITechnologyHandler {
         return Mono.just(technologyRequest)
                 .map(technologyRequestMapper::toTechnology)
                 .flatMap(technologyServicePort::saveTechnology);
+    }
+
+    @Override
+    public Mono<Long> countByIds(List<Long> ids) {
+        return technologyServicePort.verifyTechnologiesExist(ids);
     }
 }

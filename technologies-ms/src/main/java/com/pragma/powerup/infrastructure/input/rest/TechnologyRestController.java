@@ -6,8 +6,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/technologies")
@@ -20,5 +23,14 @@ public class TechnologyRestController {
     @Operation(summary = "Registrar tecnología - HU1")
     public Mono<Void> save(@Valid @RequestBody TechnologyRequest request) {
         return technologyHandler.saveTechnology(request);
+    }
+
+    @GetMapping("/verify")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Contar tecnologias por IDs tecnología - HU2")
+    public Mono<ResponseEntity<Long>> countByIds(@RequestParam List<Long> ids) {
+        return technologyHandler.countByIds(ids)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.badRequest().build());
     }
 }
