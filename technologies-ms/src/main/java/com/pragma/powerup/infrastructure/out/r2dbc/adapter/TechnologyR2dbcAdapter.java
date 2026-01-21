@@ -1,0 +1,27 @@
+package com.pragma.powerup.infrastructure.out.r2dbc.adapter;
+
+import com.pragma.powerup.domain.model.Technology;
+import com.pragma.powerup.domain.spi.ITechnologyPersistencePort;
+import com.pragma.powerup.infrastructure.out.r2dbc.mapper.ITechnologyEntityMapper;
+import com.pragma.powerup.infrastructure.out.r2dbc.repository.ITechnologyRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
+@Component
+@RequiredArgsConstructor
+public class TechnologyR2dbcAdapter implements ITechnologyPersistencePort {
+    private final ITechnologyRepository repository;
+    private final ITechnologyEntityMapper mapper;
+
+    @Override
+    public Mono<Technology> save(Technology technology) {
+        return repository.save(mapper.toEntity(technology))
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Mono<Boolean> existsByName(String name) {
+        return repository.existsByName(name);
+    }
+}

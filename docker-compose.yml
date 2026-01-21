@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d
+    container_name: bootcamp-db
+    restart: always
+    environment:
+      POSTGRES_DB: bootcamp_db
+      POSTGRES_USER: user_admin
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    networks:
+      - bootcamp-network
+
+  app:
+    build:
+      context: ./technologies-ms/
+    image: technologies_ms-image:latest
+    container_name: technologies-ms
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://db:5432/bootcamp_db
+      SPRING_R2DBC_USERNAME: user_admin
+      SPRING_R2DBC_PASSWORD: password123
+      SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
+    depends_on:
+      - db
+    networks:
+      - bootcamp-network
+
+networks:
+  bootcamp-network:
+    driver: bridge
