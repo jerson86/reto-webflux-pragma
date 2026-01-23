@@ -11,4 +11,6 @@ public interface ITechnologyServicePort {
     Mono<Void> saveTechnology(Technology technology);
     Mono<Long> verifyTechnologiesExist(List<Long> ids);
     Flux<TechnologyShort> findAllByIds(List<Long> ids);
+
+    Mono<Void> deleteTechnology(Long id);
 }

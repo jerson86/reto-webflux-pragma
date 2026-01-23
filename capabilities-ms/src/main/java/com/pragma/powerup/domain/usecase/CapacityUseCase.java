@@ -97,4 +97,22 @@ public class CapacityUseCase implements ICapacityServicePort {
                                 )
                 );
     }
+
+    @Override
+    public Mono<Void> deleteCapability(Long id) {
+        return capabilityPersistencePort.deleteById(id)
+                .flatMapMany(techIds -> Flux.fromIterable(techIds)
+                        .concatMap(techId ->
+                                capabilityPersistencePort.isTechnologyUsedInOtherCapabilities(techId, id)
+                                        .flatMap(isUsed -> {
+                                            if (Boolean.FALSE.equals(isUsed)) {
+                                                return externalTechnologyServicePort.deleteTechnology(techId);
+                                            }
+                                            return Mono.empty();
+                                        })
+                        )
+                )
+                .then()
+                .log("FLUJO-ELIMINAR-CAPACIDAD");
+    }
 }

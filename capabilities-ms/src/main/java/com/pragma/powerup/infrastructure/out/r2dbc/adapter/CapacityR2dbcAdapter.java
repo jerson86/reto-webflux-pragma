@@ -7,6 +7,7 @@ import com.pragma.powerup.infrastructure.out.r2dbc.mapper.ICapacityEntityMapper;
 import com.pragma.powerup.infrastructure.out.r2dbc.repository.ICapacityRepository;
 import com.pragma.powerup.infrastructure.out.r2dbc.repository.ICapacityTechnologyRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CapacityR2dbcAdapter implements ICapacityPersistencePort {
 
     private final ICapacityRepository capacityRepository;
@@ -78,6 +80,26 @@ public class CapacityR2dbcAdapter implements ICapacityPersistencePort {
                                 .map(CapacityTechnologyEntity::getTechnologyId)
                                 .collectList()
                                 .map(techIds -> mapper.toDomain(entity, techIds))
+                );
+    }
+
+    @Override
+    public Mono<Boolean> isTechnologyUsedInOtherCapabilities(Long technologyId, Long excludeId) {
+        log.info("isTechnologyUsedInOtherCapabilities {} {}", technologyId, excludeId);
+        return relationRepository.existsByTechnologyIdAndCapabilityIdNot(technologyId, excludeId);
+    }
+
+    @Override
+    public Mono<List<Long>> deleteById(Long id) {
+        log.info("deleteById {}", id);
+        return relationRepository.findAllByCapabilityId(id)
+                .map(CapacityTechnologyEntity::getTechnologyId)
+                .collectList()
+                .flatMap(techIds ->
+                        relationRepository.deleteByCapabilityId(id)
+                                .then(capacityRepository.deleteById(id))
+                                .thenReturn(techIds)
+                                .as(transactionalOperator::transactional)
                 );
     }
 }

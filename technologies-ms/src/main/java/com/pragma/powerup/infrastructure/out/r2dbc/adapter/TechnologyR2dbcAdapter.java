@@ -39,4 +39,9 @@ public class TechnologyR2dbcAdapter implements ITechnologyPersistencePort {
         return repository.findAllById(ids)
                 .map(entity -> new TechnologyShort(entity.getId(), entity.getName()));
     }
+
+    @Override
+    public Mono<Void> deleteById(Long id) {
+        return repository.deleteById(id);
+    }
 }

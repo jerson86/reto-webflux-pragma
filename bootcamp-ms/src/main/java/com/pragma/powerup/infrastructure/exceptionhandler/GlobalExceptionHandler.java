@@ -1,48 +1,47 @@
 package com.pragma.powerup.infrastructure.exceptionhandler;
 
 import com.pragma.powerup.domain.exception.DomainException;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
+import com.pragma.powerup.domain.model.ErrorDetails;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final String ERROR_MSG = "error";
-
-    @ExceptionHandler({DomainException.class, IllegalArgumentException.class})
-    public ResponseEntity<Map<String, String>> handleDomainException(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of(ERROR_MSG, ex.getMessage()));
-    }
-
-    @ExceptionHandler(WebExchangeBindException.class)
-    public ResponseEntity<Map<String, List<String>>> handleValidationExceptions(WebExchangeBindException ex) {
-        List<String> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .toList();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of(ERROR_MSG, errors));
-    }
-
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, String>> handleDataIntegrity(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of(ERROR_MSG, "Ya existe un registro con esos datos (violación de unicidad)"));
+    public ResponseEntity<ErrorDetails> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = "Error de integridad: El recurso no puede ser procesado porque tiene dependencias activas.";
+        // Si el error es un duplicado de nombre (HU1/HU3/HU4)
+        if (ex.getMessage() != null && ex.getMessage().contains("unique")) {
+            message = "Error: El nombre ya existe en el sistema.";
+        }
+        return buildResponse(HttpStatus.CONFLICT, message);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(ERROR_MSG, "Ha ocurrido un error inesperado en el servidor"));
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<ErrorDetails> handleWebClientException(WebClientResponseException ex) {
+        String message = "Error al comunicarse con el servicio externo: " + ex.getStatusCode();
+        return buildResponse(HttpStatus.BAD_GATEWAY, message);
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorDetails> handleDomainException(DomainException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    private ResponseEntity<ErrorDetails> buildResponse(HttpStatus status, String message) {
+        ErrorDetails details = new ErrorDetails(
+                LocalDateTime.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message
+        );
+        return new ResponseEntity<>(details, status);
     }
 }

@@ -42,4 +42,13 @@ public class ExternalCapabilityAdapter implements IExternalCapabilityServicePort
                 .doOnError(e -> log.error("Fallo al conectar con getCapabilitiesWithTechs capabilities-ms: {}", e.getMessage()))
                 .onErrorResume(e -> Flux.empty());
     }
+
+    @Override
+    public Mono<Void> deleteCapability(Long id) {
+        return webClient.delete()
+                .uri("/capabilities/{id}", id)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .doOnError(e -> log.error("Fallo al conectar con deleteCapability capabilities-ms: {}", e.getMessage()));
+    }
 }

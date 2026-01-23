@@ -8,15 +8,19 @@ import com.pragma.powerup.domain.spi.IBootcampPersistencePort;
 import com.pragma.powerup.domain.spi.IExternalCapabilityServicePort;
 import com.pragma.powerup.infrastructure.input.rest.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 @RequiredArgsConstructor
 public class BootcampUseCase implements IBootcampServicePort {
     private final IBootcampPersistencePort persistencePort;
     private final IExternalCapabilityServicePort externalCapabilityPort;
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
     public Mono<Void> saveBootcamp(Bootcamp bootcamp) {
@@ -63,5 +67,27 @@ public class BootcampUseCase implements IBootcampServicePort {
                                         new PageResponse<>(bootcamps, page, size, total, (int) Math.ceil((double) total/size)));
                             });
                 });
+    }
+
+    @Transactional
+    @Override
+    public Mono<Void> deleteBootcamp(Long id) {
+        return persistencePort.deleteBootcamp(id)
+                .flatMap(capabilityIds ->
+                        Flux.fromIterable(capabilityIds)
+                                .concatMap(capId ->
+                                        persistencePort.isCapabilityUsedInOtherBootcamps(capId, id)
+                                                .flatMap(isUsed -> {
+                                                    if (Boolean.FALSE.equals(isUsed)) {
+                                                        return externalCapabilityPort.deleteCapability(capId)
+                                                                .onErrorResume(e -> {
+                                                                    logger.info("WARN: No se pudo borrar la capacidad externa " + capId);
+                                                                    return Mono.empty();
+                                                                });
+                                                    }
+                                                    return Mono.empty();
+                                                })
+                                ).then()
+                );
     }
 }

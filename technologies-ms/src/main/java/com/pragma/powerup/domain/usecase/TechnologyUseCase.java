@@ -47,4 +47,9 @@ public class TechnologyUseCase implements ITechnologyServicePort {
         }
         return persistencePort.findAllByIds(ids);
     }
+
+    @Override
+    public Mono<Void> deleteTechnology(Long id) {
+        return persistencePort.deleteById(id);
+    }
 }

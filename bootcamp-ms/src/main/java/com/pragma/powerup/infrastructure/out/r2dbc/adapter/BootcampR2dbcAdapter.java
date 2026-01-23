@@ -57,4 +57,21 @@ public class BootcampR2dbcAdapter implements IBootcampPersistencePort {
     public Mono<Long> count() {
         return bootcampRepository.count();
     }
+
+    @Override
+    public Mono<List<Long>> deleteBootcamp(Long bootcampId) {
+        return capabilityRepository.findCapabilityIdsByBootcampId(bootcampId)
+                .collectList()
+                .flatMap(capIds ->
+                        capabilityRepository.deleteByBootcampId(bootcampId)
+                                .then(bootcampRepository.deleteById(bootcampId))
+                                .thenReturn(capIds)
+                )
+                .as(transactionalOperator::transactional);
+    }
+
+    @Override
+    public Mono<Boolean> isCapabilityUsedInOtherBootcamps(Long capabilityId, Long excludeBootcampId) {
+        return capabilityRepository.existsByCapabilityIdAndBootcampIdNot(capabilityId, excludeBootcampId);
+    }
 }

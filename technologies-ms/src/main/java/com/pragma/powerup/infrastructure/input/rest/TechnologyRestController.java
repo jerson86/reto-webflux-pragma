@@ -42,4 +42,11 @@ public class TechnologyRestController {
     public Flux<TechnologyShortResponse> getListByIds(@RequestParam List<Long> ids) {
         return technologyHandler.findAllByIds(ids);
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Eliminar tecnologias - HU6")
+    public Mono<Void> delete(@PathVariable Long id) {
+        return technologyHandler.deleteTechnology(id);
+    }
 }

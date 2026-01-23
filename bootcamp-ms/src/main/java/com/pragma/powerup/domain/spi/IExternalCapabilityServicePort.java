@@ -9,4 +9,5 @@ import java.util.List;
 public interface IExternalCapabilityServicePort {
     Mono<Boolean> verifyCapabilitiesExist(List<Long> ids);
     Flux<Capability> getCapabilitiesWithTechs(List<Long> ids);
+    Mono<Void> deleteCapability(Long capId);
 }

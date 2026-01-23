@@ -53,4 +53,9 @@ public class CapacityHandler implements ICapacityHandler {
     public Flux<CapabilityResponse> getCapabilitiesWithTechs(List<Long> ids) {
         return capacityServicePort.getCapabilitiesWithTechs(ids).map(capabilityResponseMapper::toResponse);
     }
+
+    @Override
+    public Mono<Void> deleteCapability(Long id) {
+        return capacityServicePort.deleteCapability(id);
+    }
 }

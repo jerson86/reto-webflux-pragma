@@ -7,6 +7,6 @@ import reactor.core.publisher.Mono;
 
 public interface IBootcampHandler {
     Mono<Void> saveBootcamp(BootcampRequest request);
-
     Mono<PageResponse<BootcampResponse>> getBootcamps(int page, int size, String sortBy, boolean asc);
+    Mono<Void> deleteBootcamp(Long id);
 }

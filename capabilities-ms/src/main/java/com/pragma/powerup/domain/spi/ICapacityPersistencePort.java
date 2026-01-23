@@ -14,4 +14,6 @@ public interface ICapacityPersistencePort {
     Mono<Long> countByIds(List<Long> ids);
     Flux<Capacity> findAllByIds(List<Long> ids);
     Flux<Capacity> findAllByCapabilityId(Long id);
+    Mono<List<Long>> deleteById(Long id);
+    Mono<Boolean> isTechnologyUsedInOtherCapabilities(Long technologyId, Long excludeCapabilityId);
 }

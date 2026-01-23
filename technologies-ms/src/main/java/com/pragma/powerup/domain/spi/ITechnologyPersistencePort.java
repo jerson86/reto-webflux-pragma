@@ -12,4 +12,5 @@ public interface ITechnologyPersistencePort {
     Mono<Boolean> existsByName(String name);
     Mono<Long> countByIds(List<Long> ids);
     Flux<TechnologyShort> findAllByIds(List<Long> ids);
+    Mono<Void> deleteById(Long id);
 }

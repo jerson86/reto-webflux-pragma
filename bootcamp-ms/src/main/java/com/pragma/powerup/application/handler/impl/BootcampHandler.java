@@ -37,4 +37,9 @@ public class BootcampHandler implements IBootcampHandler {
                             pageDomain.totalElements(), pageDomain.totalPages());
                 });
     }
+
+    @Override
+    public Mono<Void> deleteBootcamp(Long id) {
+        return bootcampServicePort.deleteBootcamp(id);
+    }
 }

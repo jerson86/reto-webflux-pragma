@@ -13,4 +13,5 @@ public interface ICapacityHandler {
     Mono<PageResponse<CapabilityResponse>> getCapabilities(int page, int size, String sortBy, boolean asc);
     Mono<Boolean> verifyCapabilitiesExist(List<Long> ids);
     Flux<CapabilityResponse> getCapabilitiesWithTechs(List<Long> ids);
+    Mono<Void> deleteCapability(Long id);
 }

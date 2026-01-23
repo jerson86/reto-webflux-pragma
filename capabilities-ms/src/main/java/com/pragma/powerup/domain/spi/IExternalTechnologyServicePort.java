@@ -9,4 +9,5 @@ import java.util.List;
 public interface IExternalTechnologyServicePort {
     Mono<Long> allTechnologiesExist(List<Long> ids);
     Flux<TechnologyShort> getTechnologiesByIds(List<Long> ids);
+    Mono<Void> deleteTechnology(Long techId);
 }

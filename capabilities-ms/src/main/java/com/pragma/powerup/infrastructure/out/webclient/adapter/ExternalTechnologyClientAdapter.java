@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 
 @Component
@@ -44,5 +45,17 @@ public class ExternalTechnologyClientAdapter implements IExternalTechnologyServi
                 .bodyToFlux(TechnologyShort.class)
                 .doOnError(e -> log.error("Fallo al conectar con technologies-ms: {}", e.getMessage()))
                 .onErrorResume(e -> Flux.empty());
+    }
+
+    @Override
+    public Mono<Void> deleteTechnology(Long id) {
+        return webClientTechnologies.delete()
+                .uri("/{id}", id)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .timeout(Duration.ofSeconds(2))
+                .doOnSuccess(deleted -> log.info("Technologies ms {} deleted", deleted))
+                .doOnError(e -> log.error("Error al borrar tecnología externa: {}", e.getMessage()))
+                .onErrorResume(e -> Mono.empty());
     }
 }

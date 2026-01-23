@@ -52,4 +52,10 @@ public class CapacityRestController {
     public Flux<CapabilityResponse> getCapabilitiesWithTechs(@RequestParam List<Long> ids) {
         return capacityHandler.getCapabilitiesWithTechs(ids);
     }
+
+    @DeleteMapping("/{id}")
+    public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
+        return capacityHandler.deleteCapability(id)
+                .then(Mono.fromCallable(() -> ResponseEntity.noContent().build()));
+    }
 }

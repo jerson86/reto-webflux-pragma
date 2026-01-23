@@ -34,4 +34,9 @@ public class TechnologyHandler implements ITechnologyHandler {
         return technologyServicePort.findAllByIds(ids)
                 .map(tech -> new TechnologyShortResponse(tech.id(), tech.name()));
     }
+
+    @Override
+    public Mono<Void> deleteTechnology(Long id) {
+        return technologyServicePort.deleteTechnology(id);
+    }
 }

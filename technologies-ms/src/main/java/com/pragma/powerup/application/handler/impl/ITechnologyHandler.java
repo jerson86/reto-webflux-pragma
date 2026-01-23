@@ -11,4 +11,6 @@ public interface ITechnologyHandler {
     Mono<Void> saveTechnology(TechnologyRequest technologyRequest);
     Mono<Long> countByIds(List<Long> ids);
     Flux<TechnologyShortResponse> findAllByIds(List<Long> ids);
+
+    Mono<Void> deleteTechnology(Long id);
 }
