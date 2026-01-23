@@ -3,7 +3,9 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.api.ITechnologyServicePort;
 import com.pragma.powerup.domain.exception.AlreadyExistsException;
 import com.pragma.powerup.domain.model.Technology;
+import com.pragma.powerup.domain.model.TechnologyShort;
 import com.pragma.powerup.domain.spi.ITechnologyPersistencePort;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -36,5 +38,13 @@ public class TechnologyUseCase implements ITechnologyServicePort {
         List<Long> uniqueIds = ids.stream().distinct().toList();
 
         return persistencePort.countByIds(uniqueIds);
+    }
+
+    @Override
+    public Flux<TechnologyShort> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Flux.empty();
+        }
+        return persistencePort.findAllByIds(ids);
     }
 }

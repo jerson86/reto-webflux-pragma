@@ -48,18 +48,36 @@ public class CapacityR2dbcAdapter implements ICapacityPersistencePort {
         return capacityRepository.findAllCustom(size, offset, sortField, ascending)
                 .flatMap(entity ->
                         relationRepository.findAllByCapabilityId(entity.getId())
-                                .map(rel -> rel.getTechnologyId())
+                                .map(CapacityTechnologyEntity::getTechnologyId)
                                 .collectList()
-                                .map(techIds -> {
-                                    Capacity domain = mapper.toDomain(entity);
-                                    domain.setTechnologyIds(techIds);
-                                    return domain;
-                                })
+                                .map(techIds -> mapper.toDomain(entity, techIds))
                 );
     }
 
     @Override
     public Mono<Long> count() {
         return capacityRepository.count();
+    }
+
+    @Override
+    public Mono<Long> countByIds(List<Long> ids) {
+        return capacityRepository.countByIdIn(ids);
+    }
+
+    @Override
+    public Flux<Capacity> findAllByIds(List<Long> ids) {
+        return capacityRepository.findAllByIdIn(ids)
+                .map(entity -> mapper.toDomain(entity, ids));
+    }
+
+    @Override
+    public Flux<Capacity> findAllByCapabilityId(Long id) {
+        return capacityRepository.findById(id)
+                .flatMapMany(entity ->
+                        relationRepository.findAllByCapabilityId(entity.getId())
+                                .map(CapacityTechnologyEntity::getTechnologyId)
+                                .collectList()
+                                .map(techIds -> mapper.toDomain(entity, techIds))
+                );
     }
 }

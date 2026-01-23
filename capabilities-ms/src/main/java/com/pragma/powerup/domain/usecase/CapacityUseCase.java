@@ -3,13 +3,16 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.api.ICapacityServicePort;
 import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.Capacity;
+import com.pragma.powerup.domain.model.TechnologyShort;
 import com.pragma.powerup.domain.spi.ICapacityPersistencePort;
 import com.pragma.powerup.domain.spi.IExternalTechnologyServicePort;
 import com.pragma.powerup.infrastructure.input.rest.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 public class CapacityUseCase implements ICapacityServicePort {
@@ -38,21 +41,20 @@ public class CapacityUseCase implements ICapacityServicePort {
     @Override
     public Mono<PageResponse<Capacity>> getCapabilities(int page, int size, String sortField, boolean ascending) {
         return capabilityPersistencePort.findAll(page, size, sortField, ascending)
-                .collectList() // Obtenemos la lista de capacidades de la página
+                .collectList()
                 .flatMap(capabilities -> {
-                    if (capabilities.isEmpty()) return Mono.just(new PageResponse<>(List.of(), page, size, 0, 0));
+                    if (capabilities.isEmpty()) {
+                        return Mono.just(new PageResponse<>(List.of(), page, size, 0, 0));
+                    }
 
-                    // 1. Extraer todos los IDs únicos de tecnologías de todas las capacidades
                     List<Long> allTechIds = capabilities.stream()
                             .flatMap(c -> c.getTechnologyIds().stream())
                             .distinct()
                             .toList();
 
-                    // 2. Consultar al micro de Tecnologías UNA SOLA VEZ
                     return externalTechnologyServicePort.getTechnologiesByIds(allTechIds)
-                            .collectMap(TechnologyShort::id) // Creamos un mapa ID -> Objeto
+                            .collectMap(TechnologyShort::id)
                             .flatMap(techMap -> {
-                                // 3. Asignar los nombres a cada capacidad
                                 capabilities.forEach(cap -> {
                                     List<TechnologyShort> detailedTechs = cap.getTechnologyIds().stream()
                                             .map(techMap::get)
@@ -65,5 +67,34 @@ public class CapacityUseCase implements ICapacityServicePort {
                                         new PageResponse<>(capabilities, page, size, total, (int) Math.ceil((double) total/size)));
                             });
                 });
+    }
+
+    @Override
+    public Mono<Boolean> verifyCapabilitiesExist(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Mono.just(Boolean.FALSE);
+        }
+        List<Long> uniqueIds = ids.stream().distinct().toList();
+        return capabilityPersistencePort.countByIds(uniqueIds)
+                .map(count -> count == uniqueIds.size());
+    }
+
+    @Override
+    public Flux<Capacity> getCapabilitiesWithTechs(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return Flux.empty();
+
+        return capabilityPersistencePort.findAllByIds(ids)
+                .flatMap(capability ->
+                        capabilityPersistencePort.findAllByCapabilityId(capability.getId())
+                                .map(Capacity::getTechnologyIds)
+                                .flatMap(techIds ->
+                                        externalTechnologyServicePort.getTechnologiesByIds(techIds)
+                                                .collectList()
+                                                .map(techs -> {
+                                                    capability.setTechnologies(techs);
+                                                    return capability;
+                                                })
+                                )
+                );
     }
 }

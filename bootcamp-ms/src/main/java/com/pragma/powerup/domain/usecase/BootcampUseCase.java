@@ -1,0 +1,67 @@
+package com.pragma.powerup.domain.usecase;
+
+import com.pragma.powerup.domain.api.IBootcampServicePort;
+import com.pragma.powerup.domain.exception.DomainException;
+import com.pragma.powerup.domain.model.Bootcamp;
+import com.pragma.powerup.domain.model.Capability;
+import com.pragma.powerup.domain.spi.IBootcampPersistencePort;
+import com.pragma.powerup.domain.spi.IExternalCapabilityServicePort;
+import com.pragma.powerup.infrastructure.input.rest.dto.PageResponse;
+import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Objects;
+
+@RequiredArgsConstructor
+public class BootcampUseCase implements IBootcampServicePort {
+    private final IBootcampPersistencePort persistencePort;
+    private final IExternalCapabilityServicePort externalCapabilityPort;
+
+    @Override
+    public Mono<Void> saveBootcamp(Bootcamp bootcamp) {
+        return persistencePort.existsByName(bootcamp.getName())
+                .flatMap(exists -> {
+                    if (Boolean.TRUE.equals(exists)) {
+                        return Mono.error(new DomainException("El bootcamp ya existe"));
+                    }
+
+                    return externalCapabilityPort.verifyCapabilitiesExist(bootcamp.getCapabilityIds())
+                            .flatMap(allExist -> {
+                                if (Boolean.FALSE.equals(allExist)) {
+                                    return Mono.error(new DomainException("Una o más capacidades no existen"));
+                                }
+
+                                return persistencePort.save(bootcamp);
+                            });
+                }).then();
+    }
+
+    @Override
+    public Mono<PageResponse<Bootcamp>> getBootcamps(int page, int size, String sortBy, boolean asc) {
+        return persistencePort.findAll(page, size, sortBy, asc)
+                .collectList()
+                .flatMap(bootcamps -> {
+                    if (bootcamps.isEmpty()) return Mono.just(new PageResponse<>(List.of(), page, size, 0L, 0));
+
+                    List<Long> allCapIds = bootcamps.stream()
+                            .flatMap(b -> b.getCapabilityIds().stream())
+                            .distinct().toList();
+
+                    return externalCapabilityPort.getCapabilitiesWithTechs(allCapIds)
+                            .collectMap(Capability::id)
+                            .flatMap(capMap -> {
+                                bootcamps.forEach(bootcamp -> {
+                                    List<Capability> detailedCaps = bootcamp.getCapabilityIds().stream()
+                                            .map(capMap::get)
+                                            .filter(Objects::nonNull)
+                                            .toList();
+                                    bootcamp.setCapabilities(detailedCaps);
+                                });
+
+                                return persistencePort.count().map(total ->
+                                        new PageResponse<>(bootcamps, page, size, total, (int) Math.ceil((double) total/size)));
+                            });
+                });
+    }
+}

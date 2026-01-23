@@ -8,8 +8,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/capabilities")
@@ -25,6 +29,8 @@ public class CapacityRestController {
     }
 
     @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Listar capacidades - HU3")
     public Mono<PageResponse<CapabilityResponse>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -32,5 +38,18 @@ public class CapacityRestController {
             @RequestParam(defaultValue = "true") boolean asc
     ) {
         return capacityHandler.getCapabilities(page, size, sortBy, asc);
+    }
+
+    @GetMapping("/verify")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Listar capacidades por ids - HU4")
+    public Mono<ResponseEntity<Boolean>> verifyCapabilities(@RequestParam List<Long> ids) {
+        return capacityHandler.verifyCapabilitiesExist(ids)
+                .map(ResponseEntity::ok);
+    }
+
+    @GetMapping("/list-by-ids")
+    public Flux<CapabilityResponse> getCapabilitiesWithTechs(@RequestParam List<Long> ids) {
+        return capacityHandler.getCapabilitiesWithTechs(ids);
     }
 }
