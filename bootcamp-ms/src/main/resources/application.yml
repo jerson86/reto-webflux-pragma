@@ -10,12 +10,20 @@ spring:
     url: ${SPRING_R2DBC_URL}
     username: ${SPRING_R2DBC_USERNAME}
     password: ${SPRING_R2DBC_PASSWORD}
-    sql:
-      init:
-        mode: always
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
 
 service:
   capabilities:
     url: ${CAPABILITIES_MS_URL:http://capabilities-ms:8080/api/v1}
   user:
     url: ${USER_MS_URL:http://users-ms:8080/api/v1}
+
+rabbitmq:
+  exchange:
+    name: ${RABBITMQ_EXCHANGE_NAME:bootcamp.exchange}
+  routing:
+    key: ${RABBITMQ_ROUTING_KEY:bootcamp.report.routing.key}

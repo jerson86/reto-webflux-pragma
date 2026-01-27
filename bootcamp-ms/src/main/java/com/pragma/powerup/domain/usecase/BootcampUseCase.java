@@ -4,6 +4,7 @@ import com.pragma.powerup.domain.api.IBootcampServicePort;
 import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.Bootcamp;
 import com.pragma.powerup.domain.model.Capability;
+import com.pragma.powerup.domain.spi.IBootcampNotificationPort;
 import com.pragma.powerup.domain.spi.IBootcampPersistencePort;
 import com.pragma.powerup.domain.spi.IExternalCapabilityServicePort;
 import com.pragma.powerup.infrastructure.input.rest.dto.PageResponse;
@@ -19,6 +20,7 @@ import java.util.logging.Logger;
 public class BootcampUseCase implements IBootcampServicePort {
     private final IBootcampPersistencePort persistencePort;
     private final IExternalCapabilityServicePort externalCapabilityPort;
+    private final IBootcampNotificationPort notificationPort;
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
@@ -37,7 +39,9 @@ public class BootcampUseCase implements IBootcampServicePort {
 
                                 return persistencePort.save(bootcamp);
                             });
-                }).then();
+                })
+                .doOnSuccess(notificationPort::notifyBootcampCreation)
+                .then();
     }
 
     @Override

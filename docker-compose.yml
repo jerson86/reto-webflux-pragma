@@ -83,10 +83,57 @@ services:
       SPRING_R2DBC_PASSWORD: password123
       SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
       CAPABILITIES_MS_URL: http://capabilities-ms:8080/api/v1
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      RABBITMQ_EXCHANGE_NAME: bootcamp.exchange
+      RABBITMQ_ROUTING_KEY: bootcamp.report.routing.key
     depends_on:
       - capabilities-ms
     networks:
       - bootcamp-network
+
+  report-ms:
+    build:
+      context: ./report-ms/
+    image: report_ms-image:latest
+    container_name: report-ms
+    ports:
+      - "8085:8080"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/report_db?authSource=admin
+      RABBITMQ_QUEUE_NAME: bootcamp.report.queue
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - bootcamp-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # Puerto para el envío de mensajes
+      - "15672:15672" # Panel de administración (http://localhost:15672)
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - pragma-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=report_db
+    networks:
+      - pragma-network
+
 networks:
   bootcamp-network:
     driver: bridge

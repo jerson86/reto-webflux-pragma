@@ -2,7 +2,7 @@ package com.pragma.powerup.infrastructure.out.r2dbc.adapter;
 
 import com.pragma.powerup.domain.spi.IEnrollmentPersistencePort;
 import com.pragma.powerup.infrastructure.out.r2dbc.entity.PersonBootcampEntity;
-import com.pragma.powerup.infrastructure.out.r2dbc.repository.PersonBootcampRepository;
+import com.pragma.powerup.infrastructure.out.r2dbc.repository.IPersonBootcampRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -14,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EnrollmentR2dbcAdapter implements IEnrollmentPersistencePort {
 
-    private final PersonBootcampRepository personBootcampRepository;
+    private final IPersonBootcampRepository personBootcampRepository;
 
     @Override
     public Mono<Void> saveAll(Long personId, List<Long> bootcampIds) {
