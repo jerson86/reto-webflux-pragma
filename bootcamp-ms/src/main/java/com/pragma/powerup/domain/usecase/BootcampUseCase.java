@@ -8,7 +8,6 @@ import com.pragma.powerup.domain.spi.IBootcampPersistencePort;
 import com.pragma.powerup.domain.spi.IExternalCapabilityServicePort;
 import com.pragma.powerup.infrastructure.input.rest.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -69,7 +68,6 @@ public class BootcampUseCase implements IBootcampServicePort {
                 });
     }
 
-    @Transactional
     @Override
     public Mono<Void> deleteBootcamp(Long id) {
         return persistencePort.deleteBootcamp(id)

@@ -74,4 +74,16 @@ public class BootcampR2dbcAdapter implements IBootcampPersistencePort {
     public Mono<Boolean> isCapabilityUsedInOtherBootcamps(Long capabilityId, Long excludeBootcampId) {
         return capabilityRepository.existsByCapabilityIdAndBootcampIdNot(capabilityId, excludeBootcampId);
     }
+
+    @Override
+    public Flux<Bootcamp> findAllByPersonId(Long personId) {
+        return bootcampRepository.findAllByPersonId(personId)
+                .map(mapper::toDomainNotCapabilities);
+    }
+
+    @Override
+    public Flux<Bootcamp> findAllByIds(List<Long> ids) {
+        return bootcampRepository.findAllByIdIn(ids)
+                .map(mapper::toDomainNotCapabilities);
+    }
 }

@@ -16,6 +16,25 @@ services:
     networks:
       - bootcamp-network
 
+  users-ms:
+    build:
+      context: ./users-ms/
+    image: users_ms-image:latest
+    container_name: users-ms
+    ports:
+      - "8084:8080"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://db:5432/bootcamp_db
+      SPRING_R2DBC_USERNAME: user_admin
+      SPRING_R2DBC_PASSWORD: password123
+      SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
+      JWT_SECRET: TbvVtB6CBwmTq0Lui8IRfLBtSsoa75er
+      JWT_EXPIRATION: 360000
+    depends_on:
+      - db
+    networks:
+      - bootcamp-network
+
   technologies-ms:
     build:
       context: ./technologies-ms/
@@ -29,7 +48,7 @@ services:
       SPRING_R2DBC_PASSWORD: password123
       SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
     depends_on:
-      - db
+      - users-ms
     networks:
       - bootcamp-network
 

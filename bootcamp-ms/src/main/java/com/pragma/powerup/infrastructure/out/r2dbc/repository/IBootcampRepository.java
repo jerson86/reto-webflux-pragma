@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Repository
 public interface IBootcampRepository extends R2dbcRepository<BootcampEntity, Long> {
     Mono<Boolean> existsByName(String name);
@@ -23,4 +25,11 @@ public interface IBootcampRepository extends R2dbcRepository<BootcampEntity, Lon
         LIMIT :size OFFSET :offset
     """)
     Flux<BootcampEntity> findAllCustom(int size, long offset, String sortBy, boolean asc);
+
+    @Query("SELECT b.* FROM bootcamp b " +
+            "INNER JOIN person_bootcamp pb ON b.id = pb.bootcamp_id " +
+            "WHERE pb.person_id = :personId")
+    Flux<BootcampEntity> findAllByPersonId(Long personId);
+
+    Flux<BootcampEntity> findAllByIdIn(List<Long> ids);
 }

@@ -1,6 +1,6 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
-import com.pragma.powerup.application.handler.impl.IBootcampHandler;
+import com.pragma.powerup.application.handler.IBootcampHandler;
 import com.pragma.powerup.infrastructure.input.rest.dto.BootcampRequest;
 import com.pragma.powerup.infrastructure.input.rest.dto.BootcampResponse;
 import com.pragma.powerup.infrastructure.input.rest.dto.PageResponse;
@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -21,25 +23,31 @@ public class BootcampController {
     private final IBootcampHandler bootcampHandler;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Registrar bootcamp - HU4")
-    public Mono<Void> save(@Valid @RequestBody BootcampRequest request) {
-        return bootcampHandler.saveBootcamp(request);
+    @PreAuthorize("hasRole('ADMIN')")
+    public Mono<ResponseEntity<Void>> save(@Valid @RequestBody BootcampRequest request) {
+        return bootcampHandler.saveBootcamp(request)
+                .thenReturn(new ResponseEntity<>(HttpStatus.CREATED));
     }
 
     @GetMapping
+    @Operation(summary = "Listar bootcamps - HU5")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<ResponseEntity<PageResponse<BootcampResponse>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "name") String sortBy,
-            @RequestParam(defaultValue = "true") boolean asc) {
+            @RequestParam(defaultValue = "true") boolean asc,
+            Authentication authentication) {
         return bootcampHandler.getBootcamps(page, size, sortBy, asc)
                 .map(ResponseEntity::ok);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> delete(@PathVariable Long id) {
+    @Operation(summary = "Borrar bootcamps - HU6")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Mono<Void> delete(@PathVariable Long id, Authentication authentication) {
         return bootcampHandler.deleteBootcamp(id).log();
     }
 }

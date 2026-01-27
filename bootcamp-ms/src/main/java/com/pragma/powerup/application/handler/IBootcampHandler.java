@@ -1,4 +1,4 @@
-package com.pragma.powerup.application.handler.impl;
+package com.pragma.powerup.application.handler;
 
 import com.pragma.powerup.infrastructure.input.rest.dto.BootcampRequest;
 import com.pragma.powerup.infrastructure.input.rest.dto.BootcampResponse;
