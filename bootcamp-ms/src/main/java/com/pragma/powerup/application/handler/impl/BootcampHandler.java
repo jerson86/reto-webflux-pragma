@@ -7,6 +7,7 @@ import com.pragma.powerup.domain.api.IBootcampServicePort;
 import com.pragma.powerup.infrastructure.input.rest.dto.BootcampRequest;
 import com.pragma.powerup.infrastructure.input.rest.dto.BootcampResponse;
 import com.pragma.powerup.infrastructure.input.rest.dto.PageResponse;
+import com.pragma.powerup.infrastructure.input.rest.dto.SuccessfulBootcampResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -42,5 +43,10 @@ public class BootcampHandler implements IBootcampHandler {
     @Override
     public Mono<Void> deleteBootcamp(Long id) {
         return bootcampServicePort.deleteBootcamp(id);
+    }
+
+    @Override
+    public Mono<SuccessfulBootcampResponse> getMostSuccessfulBootcamp() {
+        return bootcampServicePort.getMostSuccessfulBootcamp();
     }
 }

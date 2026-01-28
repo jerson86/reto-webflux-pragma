@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface IBootcampRequestMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "capabilities", ignore = true)
+    @Mapping(target = "technologyCount", ignore = true)
     Bootcamp toDomain(BootcampRequest request);
 }

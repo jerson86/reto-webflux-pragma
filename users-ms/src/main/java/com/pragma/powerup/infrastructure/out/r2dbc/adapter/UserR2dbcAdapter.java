@@ -7,7 +7,10 @@ import com.pragma.powerup.infrastructure.out.r2dbc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +29,12 @@ public class UserR2dbcAdapter implements IUserPersistencePort {
     @Override
     public Mono<User> findByEmail(String email) {
         return userRepository.findByEmail(email)
+                .map(userMapper::toDomain);
+    }
+
+    @Override
+    public Flux<User> findAllByIds(List<Long> ids) {
+        return userRepository.findAllById(ids)
                 .map(userMapper::toDomain);
     }
 }

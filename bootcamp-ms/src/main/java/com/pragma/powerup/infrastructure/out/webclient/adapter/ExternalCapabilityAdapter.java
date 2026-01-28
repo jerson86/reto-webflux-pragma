@@ -4,6 +4,7 @@ import com.pragma.powerup.domain.model.Capability;
 import com.pragma.powerup.domain.spi.IExternalCapabilityServicePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -12,10 +13,13 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class ExternalCapabilityAdapter implements IExternalCapabilityServicePort {
     private final WebClient webClient;
+
+    public ExternalCapabilityAdapter(@Qualifier("webClientCapabilities") WebClient webClient) {
+        this.webClient = webClient;
+    }
 
     @Override
     public Mono<Boolean> verifyCapabilitiesExist(List<Long> ids) {

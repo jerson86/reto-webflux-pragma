@@ -4,10 +4,14 @@ import com.pragma.powerup.domain.api.IBootcampServicePort;
 import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.Bootcamp;
 import com.pragma.powerup.domain.model.Capability;
+import com.pragma.powerup.domain.model.Technology;
 import com.pragma.powerup.domain.spi.IBootcampNotificationPort;
 import com.pragma.powerup.domain.spi.IBootcampPersistencePort;
 import com.pragma.powerup.domain.spi.IExternalCapabilityServicePort;
+import com.pragma.powerup.domain.spi.IExternalUserPort;
+import com.pragma.powerup.infrastructure.input.rest.dto.InrolledPerson;
 import com.pragma.powerup.infrastructure.input.rest.dto.PageResponse;
+import com.pragma.powerup.infrastructure.input.rest.dto.SuccessfulBootcampResponse;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,6 +25,7 @@ public class BootcampUseCase implements IBootcampServicePort {
     private final IBootcampPersistencePort persistencePort;
     private final IExternalCapabilityServicePort externalCapabilityPort;
     private final IBootcampNotificationPort notificationPort;
+    private final IExternalUserPort externalUserPort;
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
@@ -38,7 +43,18 @@ public class BootcampUseCase implements IBootcampServicePort {
                                 }
 
                                 return persistencePort.save(bootcamp);
-                            });
+                            })
+                            .flatMap(savedBootcamp ->
+                                    externalCapabilityPort.getCapabilitiesWithTechs(savedBootcamp.getCapabilityIds())
+                                            .flatMapIterable(Capability::technologies)
+                                            .map(Technology::id)
+                                            .distinct()
+                                            .count()
+                                            .map(techCount -> {
+                                                savedBootcamp.setTechnologyCount(techCount.intValue());
+                                                return savedBootcamp;
+                                            })
+                            );
                 })
                 .doOnSuccess(notificationPort::notifyBootcampCreation)
                 .then();
@@ -90,6 +106,36 @@ public class BootcampUseCase implements IBootcampServicePort {
                                                     return Mono.empty();
                                                 })
                                 ).then()
+                );
+    }
+
+    @Override
+    public Mono<SuccessfulBootcampResponse> getMostSuccessfulBootcamp() {
+        return persistencePort.findTopBootcampId()
+                .flatMap(bootcampId ->
+                        persistencePort.findById(bootcampId)
+                                .flatMap(bootcamp -> {
+                                    Mono<List<InrolledPerson>> personsMono = persistencePort
+                                            .findPersonIdsByBootcampId(bootcampId)
+                                            .collectList()
+                                            .flatMapMany(externalUserPort::getUsersDetails)
+                                            .collectList();
+
+                                    Mono<List<Capability>> capsMono = externalCapabilityPort
+                                            .getCapabilitiesWithTechs(bootcamp.getCapabilityIds())
+                                            .collectList();
+
+                                    return Mono.zip(personsMono, capsMono)
+                                            .map(tuple -> {
+                                                SuccessfulBootcampResponse response = new SuccessfulBootcampResponse();
+                                                response.setId(bootcamp.getId());
+                                                response.setName(bootcamp.getName());
+                                                response.setDescription(bootcamp.getDescription());
+                                                response.setEnrolledPersons(tuple.getT1());
+                                                response.setCapabilities(tuple.getT2());
+                                                return response;
+                                            });
+                                })
                 );
     }
 }

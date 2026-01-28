@@ -16,9 +16,11 @@ public interface IBootcampEntityMapper {
 
     @Mapping(target = "capabilityIds", source = "capabilityIds")
     @Mapping(target = "capabilities", ignore = true)
+    @Mapping(target = "technologyCount", ignore = true)
     Bootcamp toDomain(BootcampEntity entity, List<Long> capabilityIds);
 
     @Mapping(target = "capabilities", ignore = true)
     @Mapping(target = "capabilityIds", ignore = true)
+    @Mapping(target = "technologyCount", ignore = true)
     Bootcamp toDomainNotCapabilities(BootcampEntity entity);
 }

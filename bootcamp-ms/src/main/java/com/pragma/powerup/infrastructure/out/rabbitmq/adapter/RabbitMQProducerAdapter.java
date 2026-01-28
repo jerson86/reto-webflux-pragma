@@ -33,9 +33,8 @@ public class RabbitMQProducerAdapter implements IBootcampNotificationPort {
                     dto.setBootcampId(bootcamp.getId());
                     dto.setName(bootcamp.getName());
                     dto.setEnrolledCount(count);
-                    dto.setCapacityCount(bootcamp.getCapabilities().size());
-                    dto.setTechnologyCount((int) bootcamp.getCapabilities().stream()
-                            .flatMap(c -> c.getTechnologies().stream()).distinct().count());
+                    dto.setCapacityCount(bootcamp.getCapabilityIds().size());
+                    dto.setTechnologyCount(bootcamp.getTechnologyCount());
 
                     rabbitTemplate.convertAndSend(exchange, routingKey, dto);
                     log.info("Evento de reporte enviado a la cola para bootcamp: {}", bootcamp.getId());

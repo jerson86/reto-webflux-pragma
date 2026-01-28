@@ -4,14 +4,18 @@ import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.User;
 import com.pragma.powerup.domain.spi.IEncryptionPort;
 import com.pragma.powerup.domain.spi.ITokenPort;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +52,7 @@ public class SecurityAdapter implements IEncryptionPort, ITokenPort {
                 .setSubject(user.getEmail())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes()), SignatureAlgorithm.HS256)
+                .signWith(getKey(secret), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -56,12 +60,47 @@ public class SecurityAdapter implements IEncryptionPort, ITokenPort {
     public Map<String, Object> extractAllClaims(String token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
+                    .setSigningKey(getKey(secret))
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
         } catch (Exception e) {
             throw new DomainException("Error al parsear el token JWT");
+        }
+    }
+
+    @Override
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(getKey(secret)).build().parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public String extractRole(String token) {
+        return getClaims(token).get("role", String.class);
+    }
+
+    @Override
+    public Long extractUserId(String token) {
+        return getClaims(token).get("id", Long.class);
+    }
+
+    @Override
+    public Claims getClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(getKey(secret)).build().parseClaimsJws(token).getBody();
+    }
+
+    @Override
+    public Key getKey(String secret) {
+        try {
+            byte[] secretBytes = Decoders.BASE64.decode(secret);
+            return Keys.hmacShaKeyFor(secretBytes);
+        } catch (Exception e) {
+            return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         }
     }
 }

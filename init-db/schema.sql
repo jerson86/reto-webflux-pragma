@@ -46,6 +46,7 @@ CREATE INDEX idx_person_bootcamp_bootcamp ON person_bootcamp(bootcamp_id);
 
 CREATE TABLE users (
      id BIGSERIAL PRIMARY KEY,
+     name VARCHAR(255) NOT NULL,
      email VARCHAR(100) NOT NULL UNIQUE,
      password VARCHAR(255) NOT NULL,
      role VARCHAR(20) NOT NULL -- 'ADMIN' o 'CLIENT'

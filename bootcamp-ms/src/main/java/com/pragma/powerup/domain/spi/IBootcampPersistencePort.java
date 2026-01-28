@@ -15,4 +15,7 @@ public interface IBootcampPersistencePort {
     Mono<Boolean> isCapabilityUsedInOtherBootcamps(Long capabilityId, Long excludeBootcampId);
     Flux<Bootcamp> findAllByPersonId(Long personId);
     Flux<Bootcamp> findAllByIds(List<Long> ids);
+    Mono<Bootcamp> findById(Object bootcampId);
+    Mono<Long> findTopBootcampId();
+    Flux<Long> findPersonIdsByBootcampId(Long bootcampId);
 }

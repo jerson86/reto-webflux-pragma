@@ -6,6 +6,7 @@ import com.pragma.powerup.infrastructure.out.r2dbc.entity.BootcampCapabilityEnti
 import com.pragma.powerup.infrastructure.out.r2dbc.mapper.IBootcampEntityMapper;
 import com.pragma.powerup.infrastructure.out.r2dbc.repository.IBootcampCapabilityRepository;
 import com.pragma.powerup.infrastructure.out.r2dbc.repository.IBootcampRepository;
+import com.pragma.powerup.infrastructure.out.r2dbc.repository.IPersonBootcampRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -21,6 +22,7 @@ public class BootcampR2dbcAdapter implements IBootcampPersistencePort {
     private final IBootcampEntityMapper mapper;
     private final IBootcampCapabilityRepository capabilityRepository;
     private final TransactionalOperator transactionalOperator;
+    private final IPersonBootcampRepository personBootcampRepository;
 
     @Override
     public Mono<Bootcamp> save(Bootcamp bootcamp) {
@@ -85,5 +87,27 @@ public class BootcampR2dbcAdapter implements IBootcampPersistencePort {
     public Flux<Bootcamp> findAllByIds(List<Long> ids) {
         return bootcampRepository.findAllByIdIn(ids)
                 .map(mapper::toDomainNotCapabilities);
+    }
+
+    @Override
+    public Mono<Bootcamp> findById(Object bootcampId) {
+        Long id = (Long) bootcampId;
+        return bootcampRepository.findById(id)
+                .flatMap(entity ->
+                        capabilityRepository.findAllByBootcampId(entity.getId())
+                                .map(BootcampCapabilityEntity::getCapabilityId)
+                                .collectList()
+                                .map(capIds -> mapper.toDomain(entity, capIds))
+                );
+    }
+
+    @Override
+    public Mono<Long> findTopBootcampId() {
+        return personBootcampRepository.findTopBootcampId();
+    }
+
+    @Override
+    public Flux<Long> findPersonIdsByBootcampId(Long bootcampId) {
+        return personBootcampRepository.findPersonIdsByBootcampId(bootcampId);
     }
 }

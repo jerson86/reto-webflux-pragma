@@ -26,7 +26,7 @@ public interface IBootcampRepository extends R2dbcRepository<BootcampEntity, Lon
     """)
     Flux<BootcampEntity> findAllCustom(int size, long offset, String sortBy, boolean asc);
 
-    @Query("SELECT b.* FROM bootcamp b " +
+    @Query("SELECT b.* FROM bootcamps b " +
             "INNER JOIN person_bootcamp pb ON b.id = pb.bootcamp_id " +
             "WHERE pb.person_id = :personId")
     Flux<BootcampEntity> findAllByPersonId(Long personId);

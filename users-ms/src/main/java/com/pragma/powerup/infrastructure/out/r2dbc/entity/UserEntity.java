@@ -9,6 +9,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class UserEntity {
     @Id
     private Long id;
+    private String name;
     private String email;
     private String password;
     private String role;

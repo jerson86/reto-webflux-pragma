@@ -1,22 +1,16 @@
 package com.pragma.powerup.infrastructure.out.security;
 
-import com.pragma.powerup.domain.spi.IUserValidationPort;
+import com.pragma.powerup.domain.spi.IExternalUserPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -26,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExternalJwtAuthenticationFilter implements WebFilter {
 
-    private final IUserValidationPort userRestPort;
+    private final IExternalUserPort userRestPort;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
@@ -43,7 +37,7 @@ public class ExternalJwtAuthenticationFilter implements WebFilter {
                             : "ROLE_" + user.getRole().toUpperCase();
 
                     var auth = new UsernamePasswordAuthenticationToken(
-                            user.getUserId(), null, List.of(new SimpleGrantedAuthority(role)));
+                            user.getUserId(), header, List.of(new SimpleGrantedAuthority(role)));
 
                     return chain.filter(exchange)
                             .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));

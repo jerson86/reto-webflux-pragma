@@ -12,6 +12,7 @@ public class Bootcamp {
     private final String description;
     private LocalDate startDate;
     private Integer durationDays;
+    private Integer technologyCount;
     private final List<Long> capabilityIds;
     private List<Capability> capabilities;
 }
