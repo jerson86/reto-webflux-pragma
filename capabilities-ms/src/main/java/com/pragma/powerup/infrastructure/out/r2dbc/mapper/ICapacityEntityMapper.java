@@ -14,5 +14,6 @@ public interface ICapacityEntityMapper {
     @Mapping(target = "name", source = "capabilityEntity.name")
     @Mapping(target = "description", source = "capabilityEntity.description")
     @Mapping(target = "technologyIds", source = "techIds")
+    @Mapping(target = "technologies", ignore = true)
     Capacity toDomain(CapacityEntity capabilityEntity, List<Long> techIds);
 }
