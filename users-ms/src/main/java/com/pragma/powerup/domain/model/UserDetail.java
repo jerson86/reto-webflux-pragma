@@ -1,11 +1,11 @@
 package com.pragma.powerup.domain.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @AllArgsConstructor
 public class UserDetail {
-    private String name;
-    private String email;
+    String name;
+    String email;
 }
