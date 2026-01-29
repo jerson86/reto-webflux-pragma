@@ -15,3 +15,23 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:360000}
+
+openapi:
+  server:
+    url: ${OPENAPI_SERVER_URL:http://localhost:8080}
+    description: ${OPENAPI_SERVER_DESCRIPTION:Local server}
+  info:
+    terms-of-service: ${OPENAPI_TERMS_OF_SERVICE:http://swagger.io/terms/}
+    license:
+      url: ${OPENAPI_LICENSE_URL:http://springdoc.org}
+
+resilience:
+  circuitbreaker:
+    failure-rate: ${RESILIENCE_CB_FAILURE_RATE:50}
+    wait-duration: ${RESILIENCE_CB_WAIT_DURATION_S:30}
+    sliding-window: ${RESILIENCE_CB_SLIDING_WINDOW:10}
+  retry:
+    max-attempts: ${RESILIENCE_RETRY_MAX_ATTEMPTS:3}
+    wait-duration: ${RESILIENCE_RETRY_WAIT_DURATION_MS:500}
+  timelimiter:
+    timeout: ${RESILIENCE_TIMEOUT_S:5}

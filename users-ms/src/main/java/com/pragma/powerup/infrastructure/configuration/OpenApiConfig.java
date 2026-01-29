@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.configuration;
 
+import com.pragma.powerup.domain.utils.Constants;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -16,20 +17,26 @@ import java.util.List;
 public class OpenApiConfig {
 
     @Bean
-    public OpenAPI customOpenAPI(@Value("${spring.application.name:User Microservice}") String appName) {
+    public OpenAPI customOpenAPI(
+            @Value("${openapi.server.url}") String serverUrl,
+            @Value("${openapi.server.description}") String serverDescription,
+            @Value("${openapi.info.terms-of-service}") String termsOfService,
+            @Value("${openapi.info.license.url}") String licenseUrl,
+            @Value("${spring.application.name:User Microservice}") String appName) {
+        
         return new OpenAPI()
                 .info(new Info()
                         .title(appName)
                         .version("1.0.0")
                         .description("Microservicio de Usuarios para PoC WebFlux")
-                        .termsOfService("http://swagger.io/terms/")
-                        .license(new License().name("Apache 2.0").url("http://springdoc.org")))
+                        .termsOfService(termsOfService)
+                        .license(new License().name("Apache 2.0").url(licenseUrl)))
                 .components(new Components()
-                        .addSecuritySchemes("bearer-key",
+                        .addSecuritySchemes(Constants.BEARER_KEY,
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")))
-                .servers(List.of(new Server().url("http://localhost:8081").description("Local server")));
+                .servers(List.of(new Server().url(serverUrl).description(serverDescription)));
     }
 }

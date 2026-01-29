@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.out.security.adapter;
 
+import com.pragma.powerup.domain.utils.Constants;
 import com.pragma.powerup.domain.spi.ITokenPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,18 +27,18 @@ public class LocalJwtAuthenticationFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String header = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         log.info("Token recibido en filtro local: {}", header);
-        if (header == null || !header.startsWith("Bearer ")) {
+        if (header == null || !header.startsWith(Constants.BEARER_PREFIX)) {
             return chain.filter(exchange);
         }
 
-        String token = header.startsWith("Bearer ") ? header.substring(7) : header;
+        String token = header.startsWith(Constants.BEARER_PREFIX) ? header.substring(7) : header;
 
         try {
             if (jwtService.validateToken(token)) {
                 log.info("Token validado exitosamente en filtro local");
                 Long userId = jwtService.extractUserId(token);
                 String roleFromToken = jwtService.extractRole(token);
-                String finalRole = roleFromToken.startsWith("ROLE_") ? roleFromToken : "ROLE_" + roleFromToken;
+                String finalRole = roleFromToken.startsWith(Constants.ROLE_PREFIX) ? roleFromToken : Constants.ROLE_PREFIX + roleFromToken;
 
                 var auth = new UsernamePasswordAuthenticationToken(
                         userId,

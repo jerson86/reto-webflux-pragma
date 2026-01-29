@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.input.rest.router;
 
+import com.pragma.powerup.domain.utils.Constants;
 import com.pragma.powerup.infrastructure.exceptionhandler.ErrorResponse;
 import com.pragma.powerup.infrastructure.input.rest.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +25,7 @@ public class RouterConfig {
     @Bean
     @RouterOperations({
             @RouterOperation(path = "/api/v1/auth/register", beanClass = AuthRouteHandler.class, beanMethod = "register",
-                    operation = @Operation(operationId = "registerUser", summary = "Registrar un nuevo usuario", tags = {"Auth"},
+                    operation = @Operation(operationId = "registerUser", summary = "Registrar un nuevo usuario", tags = {Constants.AUTH_TAG},
                             requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = RegisterRequest.class))),
                             responses = {
                                     @ApiResponse(responseCode = "201", description = "Usuario registrado exitosamente",
@@ -35,7 +36,7 @@ public class RouterConfig {
                                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
                             })),
             @RouterOperation(path = "/api/v1/auth/login", beanClass = AuthRouteHandler.class, beanMethod = "login",
-                    operation = @Operation(operationId = "login", summary = "Iniciar sesión", tags = {"Auth"},
+                    operation = @Operation(operationId = "login", summary = "Iniciar sesión", tags = {Constants.AUTH_TAG},
                             requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = LoginRequest.class))),
                             responses = {
                                     @ApiResponse(responseCode = "200", description = "Login exitoso",
@@ -44,8 +45,8 @@ public class RouterConfig {
                                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
                             })),
             @RouterOperation(path = "/api/v1/auth/validate", beanClass = AuthRouteHandler.class, beanMethod = "validate",
-                    operation = @Operation(operationId = "validateToken", summary = "Validar token JWT", tags = {"Auth"},
-                            security = @SecurityRequirement(name = "bearer-key"),
+                    operation = @Operation(operationId = "validateToken", summary = "Validar token JWT", tags = {Constants.AUTH_TAG},
+                            security = @SecurityRequirement(name = Constants.BEARER_KEY),
                             responses = {
                                     @ApiResponse(responseCode = "200", description = "Token válido",
                                             content = @Content(schema = @Schema(implementation = UserValidationResponse.class))),
@@ -53,8 +54,8 @@ public class RouterConfig {
                                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
                             })),
             @RouterOperation(path = "/api/v1/users/details-batch", beanClass = UserRouteHandler.class, beanMethod = "getUsersDetails",
-                    operation = @Operation(operationId = "getUsersDetails", summary = "Obtener detalles de usuarios por lote de IDs", tags = {"User"},
-                            security = @SecurityRequirement(name = "bearer-key"),
+                    operation = @Operation(operationId = "getUsersDetails", summary = "Obtener detalles de usuarios por lote de IDs", tags = {Constants.USER_TAG},
+                            security = @SecurityRequirement(name = Constants.BEARER_KEY),
                             requestBody = @RequestBody(content = @Content(array = @ArraySchema(schema = @Schema(implementation = Long.class)))),
                             responses = {
                                     @ApiResponse(responseCode = "200", description = "Detalles de usuarios obtenidos exitosamente",

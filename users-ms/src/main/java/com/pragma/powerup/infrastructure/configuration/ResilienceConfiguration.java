@@ -6,6 +6,7 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.timelimiter.TimeLimiter;
 import io.github.resilience4j.timelimiter.TimeLimiterConfig;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,12 +15,25 @@ import java.time.Duration;
 @Configuration
 public class ResilienceConfiguration {
 
+    @Value("${resilience.circuitbreaker.failure-rate}")
+    private float failureRate;
+    @Value("${resilience.circuitbreaker.wait-duration}")
+    private int waitDurationInOpenState;
+    @Value("${resilience.circuitbreaker.sliding-window}")
+    private int slidingWindowSize;
+    @Value("${resilience.retry.max-attempts}")
+    private int maxAttempts;
+    @Value("${resilience.retry.wait-duration}")
+    private int waitDurationRetry;
+    @Value("${resilience.timelimiter.timeout}")
+    private int timeoutDuration;
+
     @Bean
     public CircuitBreaker databaseCircuitBreaker() {
         CircuitBreakerConfig config = CircuitBreakerConfig.custom()
-                .failureRateThreshold(50)
-                .waitDurationInOpenState(Duration.ofSeconds(30))
-                .slidingWindowSize(10)
+                .failureRateThreshold(failureRate)
+                .waitDurationInOpenState(Duration.ofSeconds(waitDurationInOpenState))
+                .slidingWindowSize(slidingWindowSize)
                 .minimumNumberOfCalls(5)
                 .permittedNumberOfCallsInHalfOpenState(3)
                 .build();
@@ -30,8 +44,8 @@ public class ResilienceConfiguration {
     @Bean
     public Retry databaseRetry() {
         RetryConfig config = RetryConfig.custom()
-                .maxAttempts(3)
-                .waitDuration(Duration.ofMillis(500))
+                .maxAttempts(maxAttempts)
+                .waitDuration(Duration.ofMillis(waitDurationRetry))
                 .retryExceptions(Exception.class)
                 .build();
 
@@ -41,7 +55,7 @@ public class ResilienceConfiguration {
     @Bean
     public TimeLimiter databaseTimeLimiter() {
         TimeLimiterConfig config = TimeLimiterConfig.custom()
-                .timeoutDuration(Duration.ofSeconds(5))
+                .timeoutDuration(Duration.ofSeconds(timeoutDuration))
                 .build();
 
         return TimeLimiter.of("database", config);

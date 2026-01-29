@@ -1,6 +1,7 @@
 package com.pragma.powerup.infrastructure.input.rest.router;
 
 import com.pragma.powerup.domain.api.IAuthServicePort;
+import com.pragma.powerup.domain.utils.Constants;
 import com.pragma.powerup.domain.enums.Role;
 import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.User;
@@ -96,7 +97,7 @@ public class AuthRouteHandler {
         String header = request.headers().header(HttpHeaders.AUTHORIZATION).stream().findFirst().orElse("");
         log.info("Validate token: {}", header);
         
-        if (header.isBlank() || !header.startsWith("Bearer ")) {
+        if (header.isBlank() || !header.startsWith(Constants.BEARER_PREFIX)) {
             return Mono.error(new DomainException("Header de autorización inválido"));
         }
         

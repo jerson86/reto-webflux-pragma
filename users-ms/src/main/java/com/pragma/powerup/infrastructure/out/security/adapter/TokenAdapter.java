@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.out.security.adapter;
 
+import com.pragma.powerup.domain.utils.Constants;
 import com.pragma.powerup.infrastructure.exception.TokenExpiredException;
 import com.pragma.powerup.infrastructure.exception.TokenParsingException;
 import com.pragma.powerup.domain.model.User;
@@ -29,8 +30,8 @@ public class TokenAdapter implements ITokenPort {
     @Override
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("id", user.getId());
-        claims.put("role", user.getRole());
+        claims.put(Constants.E_ID, user.getId());
+        claims.put(Constants.E_ROLE, user.getRole());
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -70,12 +71,12 @@ public class TokenAdapter implements ITokenPort {
 
     @Override
     public String extractRole(String token) {
-        return getClaims(token).get("role", String.class);
+        return getClaims(token).get(Constants.E_ROLE, String.class);
     }
 
     @Override
     public Long extractUserId(String token) {
-        return getClaims(token).get("id", Long.class);
+        return getClaims(token).get(Constants.E_ID, Long.class);
     }
 
     @Override
