@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/api/v1/auth/**").permitAll()
+                        .pathMatchers("/api/v1/users/details-batch").hasRole("ADMIN")
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(localAuthFilter, SecurityWebFiltersOrder.AUTHENTICATION)

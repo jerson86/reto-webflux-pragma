@@ -1,10 +1,10 @@
 package com.pragma.powerup.domain.api;
 
-import com.pragma.powerup.infrastructure.input.rest.dto.UserDetailResponse;
+import com.pragma.powerup.domain.model.UserDetail;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
 
 public interface IUserServicePort {
-    Flux<UserDetailResponse> findAllDetailsByIds(List<Long> ids);
+    Flux<UserDetail> findAllDetailsByIds(List<Long> ids);
 }

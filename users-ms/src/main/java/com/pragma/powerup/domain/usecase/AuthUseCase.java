@@ -21,16 +21,39 @@ public class AuthUseCase implements IAuthServicePort {
 
     @Override
     public Mono<User> register(User user) {
-        user.setPassword(encryptionPort.encode(user.getPassword()));
-        return userPersistencePort.save(user);
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            return Mono.error(new DomainException("El email es requerido"));
+        }
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            return Mono.error(new DomainException("La contraseña es requerida"));
+        }
+
+        String encryptedPassword = encryptionPort.encode(user.getPassword());
+        User userWithEncryptedPassword = user.withEncryptedPassword(encryptedPassword);
+        
+        return userPersistencePort.save(userWithEncryptedPassword)
+                .onErrorResume(e -> Mono.error(new DomainException("Error al registrar usuario: " + e.getMessage())));
     }
 
     @Override
     public Mono<String> login(String email, String password) {
+        if (email == null || email.isBlank()) {
+            return Mono.error(new DomainException("El email es requerido"));
+        }
+        if (password == null || password.isBlank()) {
+            return Mono.error(new DomainException("La contraseña es requerida"));
+        }
+
         return userPersistencePort.findByEmail(email)
                 .filter(user -> encryptionPort.matches(password, user.getPassword()))
                 .map(tokenPort::generateToken)
-                .switchIfEmpty(Mono.error(new DomainException("Invalid credentials")));
+                .switchIfEmpty(Mono.error(new DomainException("Credenciales inválidas")))
+                .onErrorResume(e -> {
+                    if (e instanceof DomainException) {
+                        return Mono.error(e);
+                    }
+                    return Mono.error(new DomainException("Error al iniciar sesión: " + e.getMessage()));
+                });
     }
 
     @Override

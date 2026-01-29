@@ -16,6 +16,7 @@ public class UserHandler implements IUserHandler {
 
     @Override
     public Flux<UserDetailResponse> getUserDetailsBatch(List<Long> ids) {
-        return servicePort.findAllDetailsByIds(ids);
+        return servicePort.findAllDetailsByIds(ids)
+                .map(userDetail -> new UserDetailResponse(userDetail.getName(), userDetail.getEmail()));
     }
 }
