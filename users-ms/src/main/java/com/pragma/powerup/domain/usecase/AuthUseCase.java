@@ -24,30 +24,17 @@ public class AuthUseCase implements IAuthServicePort {
 
     @Override
     public Mono<User> register(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            return Mono.error(new EmptyFieldException("El email es requerido"));
-        }
-        if (user.getPassword() == null || user.getPassword().isBlank()) {
-            return Mono.error(new EmptyFieldException("La contraseña es requerida"));
-        }
-
-        String encryptedPassword = encryptionPort.encode(user.getPassword());
-        User userWithEncryptedPassword = user.withEncryptedPassword(encryptedPassword);
-        
-        return userPersistencePort.save(userWithEncryptedPassword)
+        return Mono.just(user)
+                .flatMap(this::validateUserFields)
+                .map(u -> u.withEncryptedPassword(encryptionPort.encode(u.getPassword())))
+                .flatMap(userPersistencePort::save)
                 .onErrorResume(e -> Mono.error(new BusinessException("Error al registrar usuario: " + e.getMessage(), "USER_REG_ERROR")));
     }
 
     @Override
     public Mono<String> login(String email, String password) {
-        if (email == null || email.isBlank()) {
-            return Mono.error(new EmptyFieldException("El email es requerido"));
-        }
-        if (password == null || password.isBlank()) {
-            return Mono.error(new EmptyFieldException("La contraseña es requerida"));
-        }
-
-        return userPersistencePort.findByEmail(email)
+        return validateLoginFields(email, password)
+                .then(userPersistencePort.findByEmail(email))
                 .filter(user -> encryptionPort.matches(password, user.getPassword()))
                 .map(tokenPort::generateToken)
                 .switchIfEmpty(Mono.error(new InvalidCredentialsException("Credenciales inválidas")))
@@ -57,6 +44,25 @@ public class AuthUseCase implements IAuthServicePort {
                     }
                     return Mono.error(new BusinessException("Error al iniciar sesión: " + e.getMessage(), "LOGIN_ERROR"));
                 });
+    }
+
+    private Mono<User> validateUserFields(User user) {
+        return Mono.just(user)
+                .filter(u -> u.getEmail() != null && !u.getEmail().isBlank())
+                .switchIfEmpty(Mono.error(new EmptyFieldException("El email es requerido")))
+                .filter(u -> u.getPassword() != null && !u.getPassword().isBlank())
+                .switchIfEmpty(Mono.error(new EmptyFieldException("La contraseña es requerida")))
+                .thenReturn(user);
+    }
+
+    private Mono<Void> validateLoginFields(String email, String password) {
+        return Mono.just(email)
+                .filter(e -> e != null && !e.isBlank())
+                .switchIfEmpty(Mono.error(new EmptyFieldException("El email es requerido")))
+                .then(Mono.just(password))
+                .filter(p -> p != null && !p.isBlank())
+                .switchIfEmpty(Mono.error(new EmptyFieldException("La contraseña es requerida")))
+                .then();
     }
 
     @Override
