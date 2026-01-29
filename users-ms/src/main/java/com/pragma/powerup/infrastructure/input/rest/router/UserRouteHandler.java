@@ -2,6 +2,7 @@ package com.pragma.powerup.infrastructure.input.rest.router;
 
 import com.pragma.powerup.domain.api.IUserServicePort;
 import com.pragma.powerup.infrastructure.input.rest.dto.UserDetailResponse;
+import com.pragma.powerup.infrastructure.input.rest.mapper.IUserRestMapper;
 import com.pragma.powerup.infrastructure.input.rest.validator.RequestValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import java.util.List;
 @Slf4j
 public class UserRouteHandler {
     private final IUserServicePort userServicePort;
+    private final IUserRestMapper userRestMapper;
 
     public Mono<ServerResponse> getUsersDetails(ServerRequest request) {
         return request.bodyToMono(new ParameterizedTypeReference<List<Long>>() {})
@@ -29,10 +31,7 @@ public class UserRouteHandler {
                                         ctx.getAuthentication().getPrincipal(),
                                         ctx.getAuthentication().getAuthorities()))
                                 .flatMapMany(ctx -> userServicePort.findAllDetailsByIds(ids)
-                                        .map(userDetail -> new UserDetailResponse(
-                                                userDetail.getName(),
-                                                userDetail.getEmail()
-                                        ))),
+                                        .map(userRestMapper::toUserDetailResponse)),
                         UserDetailResponse.class
                 ))
                 .onErrorResume(error -> {
