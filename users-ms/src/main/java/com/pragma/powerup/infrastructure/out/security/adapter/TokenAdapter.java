@@ -1,6 +1,7 @@
 package com.pragma.powerup.infrastructure.out.security.adapter;
 
-import com.pragma.powerup.domain.exception.DomainException;
+import com.pragma.powerup.infrastructure.exception.TokenExpiredException;
+import com.pragma.powerup.infrastructure.exception.TokenParsingException;
 import com.pragma.powerup.domain.model.User;
 import com.pragma.powerup.domain.spi.ITokenPort;
 import io.jsonwebtoken.Claims;
@@ -48,8 +49,12 @@ public class TokenAdapter implements ITokenPort {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new TokenExpiredException("El token ha expirado");
+        } catch (io.jsonwebtoken.JwtException e) {
+            throw new TokenParsingException("Error al parsear el token JWT");
         } catch (Exception e) {
-            throw new DomainException("Error al parsear el token JWT");
+            throw new TokenParsingException("Error inesperado al validar token");
         }
     }
 
