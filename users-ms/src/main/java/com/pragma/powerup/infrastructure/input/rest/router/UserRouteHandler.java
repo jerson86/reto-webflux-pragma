@@ -1,6 +1,6 @@
 package com.pragma.powerup.infrastructure.input.rest.router;
 
-import com.pragma.powerup.application.handler.IUserHandler;
+import com.pragma.powerup.domain.api.IUserServicePort;
 import com.pragma.powerup.infrastructure.input.rest.dto.UserDetailResponse;
 import com.pragma.powerup.infrastructure.input.rest.validator.RequestValidator;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class UserRouteHandler {
-    private final IUserHandler userHandler;
+    private final IUserServicePort userServicePort;
 
     public Mono<ServerResponse> getUsersDetails(ServerRequest request) {
         return request.bodyToMono(new ParameterizedTypeReference<List<Long>>() {})
@@ -28,7 +28,11 @@ public class UserRouteHandler {
                                 .doOnNext(ctx -> log.info("Usuario autenticado: {} con roles: {}",
                                         ctx.getAuthentication().getPrincipal(),
                                         ctx.getAuthentication().getAuthorities()))
-                                .flatMapMany(ctx -> userHandler.getUserDetailsBatch(ids)),
+                                .flatMapMany(ctx -> userServicePort.findAllDetailsByIds(ids)
+                                        .map(userDetail -> new UserDetailResponse(
+                                                userDetail.getName(),
+                                                userDetail.getEmail()
+                                        ))),
                         UserDetailResponse.class
                 ))
                 .onErrorResume(error -> {
