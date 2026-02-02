@@ -14,29 +14,34 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class UserRouteHandler {
-    private final IUserServicePort userServicePort;
-    private final IUserRestMapper userRestMapper;
+        private final IUserServicePort userServicePort;
+        private final IUserRestMapper userRestMapper;
 
-    public Mono<ServerResponse> getUsersDetails(ServerRequest request) {
-        return request.bodyToMono(new ParameterizedTypeReference<List<Long>>() {})
-                .flatMap(ids -> RequestValidator.validateNotEmpty(ids, "Lista de IDs"))
-                .flatMap(ids -> ServerResponse.ok().body(
-                        ReactiveSecurityContextHolder.getContext()
-                                .doOnNext(ctx -> log.info("Usuario autenticado: {} con roles: {}",
-                                        ctx.getAuthentication().getPrincipal(),
-                                        ctx.getAuthentication().getAuthorities()))
-                                .flatMapMany(ctx -> userServicePort.findAllDetailsByIds(ids)
-                                        .map(userRestMapper::toUserDetailResponse)),
-                        UserDetailResponse.class
-                ))
-                .onErrorResume(error -> {
-                    log.error("Error in UserRouteHandler: {}", error.getMessage());
-                    return Mono.error(error);
-                });
-    }
+        public Mono<ServerResponse> getUsersDetails(ServerRequest request) {
+                return request.bodyToMono(new ParameterizedTypeReference<List<Long>>() {
+                })
+                                .flatMap(ids -> RequestValidator.validateNotEmpty(ids, "Lista de IDs"))
+                                .flatMap(ids -> {
+                                        var userDetails = ReactiveSecurityContextHolder.getContext()
+                                                        .doOnNext(ctx -> log.info(
+                                                                        "Usuario autenticado: {} con roles: {}",
+                                                                        ctx.getAuthentication().getPrincipal(),
+                                                                        ctx.getAuthentication().getAuthorities()))
+                                                        .flatMapMany(ctx -> userServicePort.findAllDetailsByIds(ids)
+                                                                        .map(userRestMapper::toUserDetailResponse));
+
+                                        return ServerResponse.ok().body(Objects.requireNonNull(userDetails),
+                                                        UserDetailResponse.class);
+                                })
+                                .onErrorResume(error -> {
+                                        log.error("Error in UserRouteHandler: {}", error.getMessage());
+                                        return Mono.error(error);
+                                });
+        }
 }

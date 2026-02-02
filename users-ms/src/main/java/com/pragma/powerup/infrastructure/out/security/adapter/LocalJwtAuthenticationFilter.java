@@ -5,6 +5,7 @@ import com.pragma.powerup.domain.spi.ITokenPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -15,45 +16,51 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class LocalJwtAuthenticationFilter implements WebFilter {
 
-    private final ITokenPort jwtService;
+        private final ITokenPort jwtService;
 
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String header = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        log.info("Token recibido en filtro local: {}", header);
-        if (header == null || !header.startsWith(Constants.BEARER_PREFIX)) {
-            return chain.filter(exchange);
+        @Override
+        @NonNull
+        public Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
+                return Objects
+                                .requireNonNull(Mono
+                                                .justOrEmpty(exchange.getRequest().getHeaders()
+                                                                .getFirst(HttpHeaders.AUTHORIZATION))
+                                                .filter(header -> header.startsWith(Constants.BEARER_PREFIX))
+                                                .map(this::extractToken)
+                                                .filter(jwtService::validateToken)
+                                                .flatMap(token -> {
+                                                        log.info("Token validado exitosamente en filtro local");
+                                                        return chain.filter(exchange)
+                                                                        .contextWrite(
+                                                                                        ReactiveSecurityContextHolder
+                                                                                                        .withAuthentication(
+                                                                                                                        createAuthentication(
+                                                                                                                                        token)));
+                                                })
+                                                .switchIfEmpty(chain.filter(exchange)));
         }
 
-        String token = header.startsWith(Constants.BEARER_PREFIX) ? header.substring(7) : header;
+        private String extractToken(String header) {
+                return header.substring(Constants.BEARER_PREFIX.length());
+        }
 
-        try {
-            if (jwtService.validateToken(token)) {
-                log.info("Token validado exitosamente en filtro local");
+        private UsernamePasswordAuthenticationToken createAuthentication(String token) {
                 Long userId = jwtService.extractUserId(token);
                 String roleFromToken = jwtService.extractRole(token);
-                String finalRole = roleFromToken.startsWith(Constants.ROLE_PREFIX) ? roleFromToken : Constants.ROLE_PREFIX + roleFromToken;
+                String finalRole = roleFromToken.startsWith(Constants.ROLE_PREFIX)
+                                ? roleFromToken
+                                : Constants.ROLE_PREFIX + roleFromToken;
 
-                var auth = new UsernamePasswordAuthenticationToken(
-                        userId,
-                        token,
-                        List.of(new SimpleGrantedAuthority(finalRole))
-                );
-
-                return chain.filter(exchange)
-                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
-            }
-            log.error("Token NO válido para el JwtProvider local. ¿La secret key es la misma?");
-        } catch (Exception e) {
-            log.error(e.getMessage());
+                return new UsernamePasswordAuthenticationToken(
+                                userId,
+                                token,
+                                List.of(new SimpleGrantedAuthority(finalRole)));
         }
-
-        return chain.filter(exchange);
-    }
 }

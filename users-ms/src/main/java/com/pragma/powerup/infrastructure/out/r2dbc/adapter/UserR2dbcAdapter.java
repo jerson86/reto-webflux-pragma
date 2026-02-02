@@ -1,6 +1,7 @@
 package com.pragma.powerup.infrastructure.out.r2dbc.adapter;
 
 import com.pragma.powerup.domain.exception.DomainException;
+import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
 import com.pragma.powerup.domain.model.User;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
 import com.pragma.powerup.infrastructure.out.r2dbc.mapper.IUserEntityMapper;
@@ -11,12 +12,14 @@ import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -30,15 +33,21 @@ public class UserR2dbcAdapter implements IUserPersistencePort {
     @Override
     public Mono<User> save(User user) {
         log.info("UserR2dbcAdapter save {}", user);
-        return userRepository.save(userMapper.toEntity(user))
+        return Mono.justOrEmpty(user)
+                .map(userMapper::toEntity)
+                .filter(Objects::nonNull)
+                .flatMap(userRepository::save)
                 .map(userMapper::toDomain)
                 .transformDeferred(CircuitBreakerOperator.of(databaseCircuitBreaker))
                 .transformDeferred(RetryOperator.of(databaseRetry))
                 .timeout(Duration.ofSeconds(5))
                 .onErrorMap(e -> {
                     log.error("Error saving user: {}", e.getMessage());
-                    if (e instanceof DomainException) {
+                    if (e instanceof DomainException || e instanceof UserAlreadyExistsException) {
                         return e;
+                    }
+                    if (e instanceof DataIntegrityViolationException) {
+                        return new UserAlreadyExistsException("El usuario ya se encuentra registrado.");
                     }
                     return new DomainException("Error al guardar usuario en la base de datos");
                 });

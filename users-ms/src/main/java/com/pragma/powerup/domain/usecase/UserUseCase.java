@@ -6,6 +6,7 @@ import com.pragma.powerup.domain.model.UserDetail;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -15,11 +16,10 @@ public class UserUseCase implements IUserServicePort {
 
     @Override
     public Flux<UserDetail> findAllDetailsByIds(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return Flux.error(new DomainException("La lista de IDs no puede estar vacía"));
-        }
-
-        return userPersistencePort.findAllByIds(ids)
+        return Mono.justOrEmpty(ids)
+                .filter(list -> !list.isEmpty())
+                .switchIfEmpty(Mono.error(new DomainException("La lista de IDs no puede estar vacía")))
+                .flatMapMany(userPersistencePort::findAllByIds)
                 .map(user -> new UserDetail(user.getName(), user.getEmail()))
                 .onErrorResume(e -> {
                     if (e instanceof DomainException) {
