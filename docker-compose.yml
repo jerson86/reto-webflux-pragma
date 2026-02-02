@@ -22,12 +22,12 @@ services:
     ports:
       - "8084:8080"
     environment:
-      SPRING_R2DBC_URL: r2dbc:postgresql://db:5432/bootcamp_db
-      SPRING_R2DBC_USERNAME: user_admin
-      SPRING_R2DBC_PASSWORD: password123
+      SPRING_R2DBC_URL: ${SPRING_R2DBC_URL:-r2dbc:postgresql://db:5432/bootcamp_db}
+      SPRING_R2DBC_USERNAME: ${SPRING_R2DBC_USERNAME:-user_admin}
+      SPRING_R2DBC_PASSWORD: ${SPRING_R2DBC_PASSWORD:-password123}
       SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
-      JWT_SECRET: MzY0MzYyNzY3OTcySjY0NTc2NzY5M0I2MjM5MzU0NDQ1MzI3M0M3MTY1Njg2Mg==
-      JWT_EXPIRATION: 360000
+      JWT_SECRET: ${JWT_SECRET:-MzY0MzYyNzY3OTcySjY0NTc2NzY5M0I2MjM5MzU0NDQ1MzI3M0M3MTY1Njg2Mg==}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-360000}
     depends_on:
       - db
     networks:
@@ -117,7 +117,7 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"   # Puerto para el envío de mensajes
+      - "5672:5672" # Puerto para el envío de mensajes
       - "15672:15672" # Panel de administración (http://localhost:15672)
     environment:
       - RABBITMQ_DEFAULT_USER=guest

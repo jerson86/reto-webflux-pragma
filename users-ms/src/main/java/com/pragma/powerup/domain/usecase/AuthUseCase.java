@@ -13,14 +13,11 @@ import com.pragma.powerup.domain.spi.ITokenPort;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-
 @AllArgsConstructor
 public class AuthUseCase implements IAuthServicePort {
     private final IUserPersistencePort userPersistencePort;
     private final IEncryptionPort encryptionPort;
     private final ITokenPort tokenPort;
-
 
     @Override
     public Mono<User> register(User user) {
@@ -28,7 +25,8 @@ public class AuthUseCase implements IAuthServicePort {
                 .flatMap(this::validateUserFields)
                 .map(u -> u.withEncryptedPassword(encryptionPort.encode(u.getPassword())))
                 .flatMap(userPersistencePort::save)
-                .onErrorResume(e -> Mono.error(new BusinessException("Error al registrar usuario: " + e.getMessage(), "USER_REG_ERROR")));
+                .onErrorResume(e -> Mono.error(
+                        new BusinessException("Error al registrar usuario: " + e.getMessage(), "USER_REG_ERROR")));
     }
 
     @Override
@@ -42,7 +40,8 @@ public class AuthUseCase implements IAuthServicePort {
                     if (e instanceof BaseException) {
                         return Mono.error(e);
                     }
-                    return Mono.error(new BusinessException("Error al iniciar sesión: " + e.getMessage(), "LOGIN_ERROR"));
+                    return Mono
+                            .error(new BusinessException("Error al iniciar sesión: " + e.getMessage(), "LOGIN_ERROR"));
                 });
     }
 
@@ -68,11 +67,8 @@ public class AuthUseCase implements IAuthServicePort {
     @Override
     public Mono<UserValidation> validateToken(String token) {
         return Mono.fromCallable(() -> {
-            Map<String, Object> claims = tokenPort.extractAllClaims(token);
-
-            Long id = Long.valueOf(claims.get("id").toString());
-            String role = (String) claims.get("role");
-
+            Long id = tokenPort.extractUserId(token);
+            String role = tokenPort.extractRole(token);
             return new UserValidation(id, role);
         }).onErrorResume(e -> {
             if (e instanceof BaseException) {
